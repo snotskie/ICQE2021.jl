@@ -42,24 +42,24 @@ codes = [
     :NonHappy,
     :Sweets,
     :Oily,
-    # :Friends, # qualitatively does not tell us anything
+    # # :Friends, # qualitatively does not tell us anything
     :Out,
     :Doubt,
     :Cry,
     :Passed,
-    # :Religion # only appears once in the data
+    # # :Religion # only appears once in the data
 ]
 conversations = [:Day]
 units = [:Day]
 seed = 4321
 knn = 35
-weights1 = [0.0, 0.50, 0.01]
-plotsizes = [7, 20, 7]
+weights1 = [0.0, 0.01, 0.5, 0.7]
+plotsizes = [7, 7, 20, 20]
 epsval = 0.5
 min_cluster_size=5
 min_neighbors=2
-nodesToExclude = [:DoseTracking, :SkippedDose]
-MRs = [(1, 2), (2, 3), (1, 4)]
+limses = [0.025, 0.05, 0.1]
+MRs = [(2, 6), (1, 5), (1, 3), (3, 4), (2, 4)]
 
 # Descriptive Statistics
 println("Descripive Statistics:")
@@ -138,12 +138,34 @@ function plotUMAP(embedding, plotsize, colormode)
     lineWidths = map(eachrow(ena.networkModel)) do networkRow
         return sum(displayAccums[!, networkRow[:relationship]])
     end
+
+    codeWidths = zeros(nrow(ena.codeModel))
+    for (i, networkRow) in enumerate(eachrow(ena.networkModel))
+        j, k = ena.relationshipMap[networkRow[:relationship]]
+        codeWidths[j] += lineWidths[i]
+        codeWidths[k] += lineWidths[i]
+    end
     
+    codeXs = zeros(nrow(ena.codeModel))
+    codeYs = zeros(nrow(ena.codeModel))
+    for (i, networkRow) in enumerate(eachrow(ena.networkModel))
+        j, k = ena.relationshipMap[networkRow[:relationship]]
+        # pointA = [embedding[1, codeIndex+j], embedding[2, codeIndex+j]]
+        # pointB = [embedding[1, codeIndex+k], embedding[2, codeIndex+k]]
+        pointT = [embedding[1, lineIndex+i], embedding[2, lineIndex+i]]
+        codeXs[j] += pointT[1] * lineWidths[i] / codeWidths[j]
+        codeXs[k] += pointT[1] * lineWidths[i] / codeWidths[k]
+        codeYs[j] += pointT[2] * lineWidths[i] / codeWidths[j]
+        codeYs[k] += pointT[2] * lineWidths[i] / codeWidths[k]
+    end
+
     lineWidths *= 8 / maximum(allLineWidths)
     for (i, networkRow) in enumerate(eachrow(ena.networkModel))
         j, k = ena.relationshipMap[networkRow[:relationship]]
-        pointA = [embedding[1, codeIndex+j], embedding[2, codeIndex+j]]
-        pointB = [embedding[1, codeIndex+k], embedding[2, codeIndex+k]]
+        # pointA = [embedding[1, codeIndex+j], embedding[2, codeIndex+j]]
+        # pointB = [embedding[1, codeIndex+k], embedding[2, codeIndex+k]]
+        pointA = [codeXs[j], codeYs[j]]
+        pointB = [codeXs[k], codeYs[k]]
         pointT = [embedding[1, lineIndex+i], embedding[2, lineIndex+i]]
         points = hcat(pointA, pointT, pointT, pointT, pointB)
         plot!(p,
@@ -155,18 +177,13 @@ function plotUMAP(embedding, plotsize, colormode)
             linecolor=:grey)
     end
     
-    codeWidths = zeros(nrow(ena.codeModel))
-    for (i, networkRow) in enumerate(eachrow(ena.networkModel))
-        j, k = ena.relationshipMap[networkRow[:relationship]]
-        codeWidths[j] += lineWidths[i]
-        codeWidths[k] += lineWidths[i]
-    end
-    
     codeWidths *= 8 / maximum(codeWidths)
     labels = map(label->text(label, :top, 8), ena.codeModel[!, :code])
     plot!(p,
-        embedding[1, (codeIndex+1):lineIndex] .- meanX,
-        embedding[2, (codeIndex+1):lineIndex] .- meanY,
+        # embedding[1, (codeIndex+1):lineIndex] .- meanX,
+        # embedding[2, (codeIndex+1):lineIndex] .- meanY,
+        codeXs .- meanX,
+        codeYs .- meanY,
         label=nothing,
         seriestype=:scatter,
         series_annotations=labels,
@@ -248,6 +265,14 @@ end
 
 data[nonEmptyRows, :LABEL] = ena.metadata[!, :LABEL]
 
+## Displaying time windows
+for label in sort(unique(data[!, :LABEL]))
+    if label != "No Label"
+        labelRows = data[!, :LABEL] .== label
+        println("$(label): $(first(data[labelRows, :Date])) -- $(last(data[labelRows, :Date]))")
+    end
+end
+
 # Code and Count
 agg_data = combine(groupby(data, :LABEL), sort(codes) .=> sum .=> sort(codes))
 display(agg_data)
@@ -259,19 +284,16 @@ for dim1 in 1:(length(groups)-3)
     ## Run and plot LDA for all nodes
     rotation = LDARotation(:LABEL, dim1)
     ena = ENAModel(data, codes, conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL]!="No Label")
-    p = plot(ena, weakLinks=false, lims=0.2)    
-    savefig(p, "images/LDA$(dim1).png")
-
-    ## Remove nodes that are so strong they prevent reading the rest of the networks
-    ena = ENAModel(data, setdiff(codes, nodesToExclude), conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL]!="No Label")
-    p = plot(ena, weakLinks=false, lims=0.2)
-    savefig(p, "images/SimplifiedLDA$(dim1).png")
+    for lims in limses
+        p = plot(ena, weakLinks=false, showUnits=false, lims=lims)    
+        savefig(p, "images/LDA$(dim1)-$(lims).png")
+    end
 end
 
 # MR
 for (group1, group2) in MRs
     rotation = MeansRotation(:LABEL, "Auto Cluster #$(group2)", "Auto Cluster #$(group1)")
-    ena = ENAModel(data, setdiff(codes, nodesToExclude), conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL] != "No Label")# in ["Auto Cluster #$(group1)", "Auto Cluster #$(group2)"])
+    ena = ENAModel(data, codes, conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL]!="No Label")
     p = plot(ena, weakLinks=false)
     savefig(p, "images/MR_$(group1)_$(group2).png")
     # TODO run mann whitney tests, and pull out and report the coregistrations
