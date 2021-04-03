@@ -53,6 +53,9 @@ codes = [
 ]
 conversations = [:Day]
 units = [:Day]
+dropEmpty=true
+sphereNormalize=false
+dimensionNormalize=true
 seed = 4321
 weight1 = 0.999999999999
 knn = 35
@@ -60,6 +63,7 @@ epsval = 0.9
 min_cluster_size=5
 min_neighbors=2
 plotsize = 25
+lineSize = 1
 limses = [0.025, 0.05, 0.1]
 
 # Descriptive Statistics
@@ -69,9 +73,14 @@ for code in sort(codes)
 end
 
 # ENA
-ena = ENAModel(data, codes, conversations, units, dropEmpty=true, sphereNormalize=true)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize)
 p = plot(ena, weakLinks=false)
 savefig(p, "images/SVD.png")
+
+rotation = FormulaRotation(LinearModel, 2, @formula(col ~ 1 + Day), nothing)
+ena = ENAModel(data, codes, conversations, units, rotateBy=rotation, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize)
+p = plot(ena, weakLinks=false)
+savefig(p, "images/F1.png")
 
 # UMAP
 ## Preprocessing unit, code, and "line" data for embedding
@@ -165,7 +174,7 @@ function plotUMAP(embedding, plotsize, colormode)
         codeYs[k] += pointT[2] * lineWidths[i] / codeWidths[k]
     end
 
-    lineWidths *= 8 / maximum(allLineWidths)
+    lineWidths *= lineSize / maximum(allLineWidths)
     for (i, networkRow) in enumerate(eachrow(ena.networkModel))
         j, k = ena.relationshipMap[networkRow[:relationship]]
         pointA = [codeXs[j], codeYs[j]]
@@ -314,8 +323,11 @@ CSV.write("data/agg_data.csv", agg_data)
 groups = sort(unique(data[!, :LABEL]))
 for group1 in 1:(length(groups)-2)
     group2 = group1 + 1
-    rotation = MeansRotation(:LABEL, "Auto Cluster #$(group2)", "Auto Cluster #$(group1)")
-    ena = ENAModel(data, codes, conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL]!="No Label") # TODO fix this
+    rotation = MeansRotation(:LABEL, "Auto Cluster #$(group1)", "Auto Cluster #$(group2)")
+    ena = ENAModel(data, codes, conversations, units, rotateBy=rotation,
+        dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize,
+        subsetFilter=x->x[:LABEL]!="No Label") # TODO fix this
+
     p = plot(ena, weakLinks=false)
     savefig(p, "images/MR_$(group1)_$(group2).png")
     # TODO run mann whitney tests, and pull out and report the coregistrations
