@@ -307,30 +307,33 @@ agg_data = combine(groupby(data, :LABEL), sort(codes) .=> sum .=> sort(codes))
 display(agg_data)
 CSV.write("data/agg_data.csv", agg_data)
 
-# # LDA
-# groups = sort(unique(data[!, :LABEL]))
-# for dim1 in 1:(length(groups)-3)
-#     ## Run and plot LDA for all nodes
-#     rotation = LDARotation(:LABEL, dim1)
-#     ena = ENAModel(data, codes, conversations, units, dropEmpty=true, rotateBy=rotation, subsetFilter=x->x[:LABEL]!="No Label")
-#     for lims in limses
-#         p = plot(ena, weakLinks=false, showUnits=false, lims=lims)    
-#         savefig(p, "images/LDA$(dim1)-$(lims).png")
-#     end
-# end
-
-# MR
+# LDA
 groups = sort(unique(data[!, :LABEL]))
-for group1 in 1:(length(groups)-2)
-    group2 = group1 + 1
-    rotation = MeansRotation(:LABEL, "Auto Cluster #$(group1)", "Auto Cluster #$(group2)")
+for dim1 in 1:(length(groups)-3)
+    ## Run and plot LDA for all nodes
+    rotation = LDARotation(:LABEL, dim1)
     ena = ENAModel(data, codes, conversations, units, rotateBy=rotation,
         dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize,
-        subsetFilter=x->x[:LABEL]!="No Label") # TODO fix this
-
-    p = plot(ena, weakLinks=false)
-    savefig(p, "images/MR_$(group1)_$(group2).png")
-    # TODO run mann whitney tests, and pull out and report the coregistrations
+        subsetFilter=x->x[:LABEL]!="No Label")
+        
+    for lims in limses
+        p = plot(ena, weakLinks=false, showUnits=false, lims=lims)    
+        savefig(p, "images/LDA$(dim1)-$(lims).png")
+    end
 end
+
+# # MR
+# groups = sort(unique(data[!, :LABEL]))
+# for group1 in 1:(length(groups)-2)
+#     group2 = group1 + 1
+#     rotation = MeansRotation(:LABEL, "Auto Cluster #$(group1)", "Auto Cluster #$(group2)")
+#     ena = ENAModel(data, codes, conversations, units, rotateBy=rotation,
+#         dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize,
+#         subsetFilter=x->x[:LABEL]!="No Label") # TODO fix this
+
+#     p = plot(ena, weakLinks=false)
+#     savefig(p, "images/MR_$(group1)_$(group2).png")
+#     # TODO run mann whitney tests, and pull out and report the coregistrations
+# end
 
 end # let
