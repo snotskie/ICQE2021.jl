@@ -62,7 +62,7 @@ knn = 35
 epsval = 0.9
 min_cluster_size=5
 min_neighbors=2
-plotsize = 25
+plotsize = 20
 lineSize = 1
 limses = [0.025, 0.05, 0.1]
 
