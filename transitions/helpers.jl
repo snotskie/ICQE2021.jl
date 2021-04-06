@@ -56,19 +56,47 @@ function embedNetwork!(ena, model, seed)
     ena.networkModel[!, :umap_x] = networkEmbedding[1, :]
     ena.networkModel[!, :umap_y] = networkEmbedding[2, :]
 
+    ### Add to codeModel
+    #### Only care about non-empty networks
+    nonZeroRows = map(eachrow(ena.accumModel)) do row
+        if sum(row[ena.networkModel[!, :relationship]]) == 0
+            return false
+        else
+            return true
+        end
+    end
+
+    #### Regression model for placing the code dots
+    X = Matrix{Float64}(zeros(nrow(ena.accumModel[nonZeroRows, :]), nrow(ena.codeModel)))
+    for (i, unitRow) in enumerate(eachrow(ena.accumModel[nonZeroRows, :]))
+        for r in keys(ena.relationshipMap)
+            a, b = ena.relationshipMap[r]
+            X[i, a] += unitRow[r] / 2
+            X[i, b] += unitRow[r] / 2
+        end
+    end
+
+    X = (transpose(X) * X)^-1 * transpose(X)
+
+    #### Running regressions
+    meanX = mean(ena.accumModel[nonZeroRows, :umap_x])
+    meanY = mean(ena.accumModel[nonZeroRows, :umap_y])
+    ena.codeModel[!, :umap_x] = X * Vector{Float64}(ena.accumModel[nonZeroRows, :umap_x] .- meanX)
+    ena.codeModel[!, :umap_y] = X * Vector{Float64}(ena.accumModel[nonZeroRows, :umap_y] .- meanY)
+
     ### Unseed
     Random.seed!(Dates.value(now()))
 end
 
 ## Helper 3 - plot UMAP+ENA projections
-function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSize=3, codeSize=8, unitSize=4)
+function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSize=8, codeSize=8, unitSize=4)
 
     ### Empty plot
     p = plot(; size=(800,800))
     xticks!(p, [-1, 1])
     yticks!(p, [-1, 1])
-    xlims!(p, (-1, 1))
-    ylims!(p, (-1, 1))
+    xlims!(p, (-1.5, 1.5))
+    ylims!(p, (-1.5, 1.5))
 
     ### Hide empty networks, and optionally focus on just one group
     nonZeroRows = map(eachrow(ena.accumModel)) do row
@@ -95,8 +123,8 @@ function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSi
     ### Center and scale points
     meanX = mean(ena.accumModel[nonZeroRows, :umap_x])
     meanY = mean(ena.accumModel[nonZeroRows, :umap_y])
-    scaleX = 1 / maximum(abs.(ena.accumModel[nonZeroRows, :umap_x] .- meanX)) / 1.1
-    scaleY = 1 / maximum(abs.(ena.accumModel[nonZeroRows, :umap_y] .- meanY)) / 1.1
+    scaleX = 1 / maximum(abs.(ena.accumModel[nonZeroRows, :umap_x] .- meanX))
+    scaleY = 1 / maximum(abs.(ena.accumModel[nonZeroRows, :umap_y] .- meanY))
     xs = Vector{Float64}(displayAccums[!, :umap_x])
     xs = xs .- meanX
     xs *= scaleX 
@@ -128,16 +156,8 @@ function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSi
     end
     
     ### Finding node positions
-    codeXs = zeros(nrow(ena.codeModel))
-    codeYs = zeros(nrow(ena.codeModel))
-    for (i, networkRow) in enumerate(eachrow(ena.networkModel))
-        j, k = ena.relationshipMap[networkRow[:relationship]]
-        pointT = [(networkRow[:umap_x] .- meanX) * scaleX, (networkRow[:umap_y] .- meanY) * scaleY]
-        codeXs[j] += pointT[1] * allLineWidths[i] / allCodeWidths[j]
-        codeXs[k] += pointT[1] * allLineWidths[i] / allCodeWidths[k]
-        codeYs[j] += pointT[2] * allLineWidths[i] / allCodeWidths[j]
-        codeYs[k] += pointT[2] * allLineWidths[i] / allCodeWidths[k]
-    end
+    codeXs = ena.codeModel[!, :umap_x] * scaleX
+    codeYs = ena.codeModel[!, :umap_y] * scaleY
 
     ### Draw the network
     lineWidths *= lineSize / maximum(allLineWidths)

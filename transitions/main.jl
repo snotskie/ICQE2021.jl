@@ -55,13 +55,11 @@ codes = [
 conversations = [:Day]
 units = [:Day]
 dropEmpty=true
-sphereNormalize=false
-dimensionNormalize=true
+sphereNormalize=true
+dimensionNormalize=false
 seed = 4321
-weight1 = 0.999999999999
 knn = 35
-epsval = 0.4
-min_cluster_size=5
+min_cluster_size=10
 min_neighbors=2
 limses = [0.025, 0.05, 0.1]
 colorMap = Dict("No Label" => colorant"black")
@@ -85,6 +83,8 @@ savefig(p, "images/F1.png")
 display(p)
 
 # No weight1
+epsval = 0.6
+
 ## UMAP
 model = embedUnits!(ena, :Day, knn, 0.0, seed)
 embedNetwork!(ena, model, seed)
@@ -111,6 +111,7 @@ for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
 end
 
 # Low weight1
+epsval = 0.48
 w = 1 / (nrow(ena.networkModel) + 1)
 
 ## UMAP
@@ -138,9 +139,12 @@ for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
     end
 end
 
-# Target weight1
+# High weight1
+epsval = 0.5
+w = 0.999999999999
+
 ## UMAP
-model = embedUnits!(ena, :Day, knn, weight1, seed)
+model = embedUnits!(ena, :Day, knn, w, seed)
 embedNetwork!(ena, model, seed)
 
 ## DBSCAN
@@ -148,18 +152,18 @@ autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
 
 ## Plotting
 p = plot(ena, weakLinks=false, groupBy=:LABEL)
-savefig(p, "images/LabelF1_$(weight1).png")
+savefig(p, "images/LabelF1_$(w).png")
 display(p)
 p = plotUMAP(ena, colorMap, :Day)
-savefig(p, "images/SpectralUMAP_$(weight1).png")
+savefig(p, "images/SpectralUMAP_$(w).png")
 display(p)
 p = plotUMAP(ena, colorMap, :Day, colormode=:label)
-savefig(p, "images/LabelUMAP_$(weight1).png")
+savefig(p, "images/LabelUMAP_$(w).png")
 display(p)
 for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
     if group != "No Label"
         p = plotUMAP(ena, colorMap, :Day, colormode=:label, group=group)
-        savefig(p, "images/GroupedUMAP_$(weight1)_group_$(i).png")
+        savefig(p, "images/GroupedUMAP_$(w)_group_$(i).png")
         display(p)
     end
 end
