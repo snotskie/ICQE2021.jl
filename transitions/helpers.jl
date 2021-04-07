@@ -313,6 +313,13 @@ function plotCDFs(ena, col, colorMap)
         if label != "No Label"
             plot!(p,
                 [labelPrevX[label], x],
+                [labelCounts[label], labelCounts[label]],
+                label=nothing,
+                seriestype=:line,
+                linecolor=colorMap[label])
+            
+            plot!(p,
+                [x, x],
                 [labelCounts[label], labelCounts[label] + 1],
                 label=nothing,
                 seriestype=:line,
@@ -324,4 +331,17 @@ function plotCDFs(ena, col, colorMap)
     end
 
     return p
+end
+
+
+
+# Preprocessing
+## Helper 7 - 
+function derivedCode!(data, newCol, oldCols...)
+    data[!, newCol] = ones(nrow(data))
+    for col in oldCols
+        data[!, newCol] = data[!, newCol] .* (1 .- data[!, col])
+    end
+
+    data[!, newCol] = 1 .- data[!, newCol]
 end

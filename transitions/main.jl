@@ -21,36 +21,44 @@ let # create a non-global scope
 # Data
 data = DataFrame(CSV.File("data/data.csv", normalizenames=true))
 data[!, :LABEL] = repeat(["No Label"], nrow(data))
+derivedCode!(data, :BODY, :Changes, :Mood, :Oily, :Dysphoria, :Cry)
+derivedCode!(data, :REFLECT, :Identity, :Longing, :Dream, :Childhood, :Family, :Name, :Letter, :Doubt, :Religion)
+derivedCode!(data, :LEARN, :WWW, :Experiment, :Recipe)
+derivedCode!(data, :PROGRESS, :Strangers, :Passed, :Out, :Affirmation)
 
 # Config
 codes = [
-    :WWW,
-    :Identity,
-    :Longing,
-    :Changes,
-    # :Mood, # same as :Strangers
-    # :Strangers, # least qualitatively insightful, curse of dimensionality
-    :Dream,
-    :Childhood,
-    :Experiment,
-    # :Dysphoria, # same as :Strangers
-    :Affirmation,
-    :Family,
-    :Name,
-    :Letter,
-    :Recipe,
+    :BODY,
+    # :Changes, # derived into :BODY
+    # :Mood, # derived into :BODY
+    # :Dysphoria, # derived into :BODY
+    # :Oily, # derived into :BODY
+    # :Cry, # derived into :BODY
+    :REFLECT,
+    # :Identity, # derived into :REFLECT
+    # :Longing, # derived into :REFLECT
+    # :Dream, # derived into :REFLECT
+    # :Childhood, # derived into :REFLECT
+    # :Family, # derived into :REFLECT
+    # :Name, # derived into :REFLECT
+    # :Letter, # derived into :REFLECT
+    # :Doubt, # derived into :REFLECT
+    # :Religion # derived into :REFLECT
+    :LEARN,
+    # :WWW, # derived into :LEARN
+    # :Experiment, # derived into :LEARN
+    # :Recipe, # derived into :LEARN
+    :PROGRESS,
+    # :Strangers, # derived into :PROGRESS
+    # :Out, # derived into :PROGRESS
+    # :Passed, # derived into :PROGRESS
+    # :Affirmation, # derived into :PROGRESS
     :DoseTracking,
     :SkippedDose,
     :Happy,
     :NonHappy,
     :Sweets,
-    :Oily,
     # :Friends, # qualitatively does not tell us anything
-    :Out,
-    :Doubt,
-    :Cry,
-    :Passed,
-    # :Religion # only appears once in the data
 ]
 conversations = [:Day]
 units = [:Day]
@@ -126,7 +134,7 @@ function gamut(epsval, w)
 end
 
 gamut(0.6, 0.0)
-gamut(0.48, 1 / (nrow(ena.networkModel) + 1))
+gamut(0.375, 1 / (nrow(ena.networkModel) + 1))
 gamut(0.5, 0.999999999999)
 
 
