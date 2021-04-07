@@ -18,11 +18,11 @@ include("helpers.jl")
 
 let # create a non-global scope
 
-# Prepare data
+# Data
 data = DataFrame(CSV.File("data/data.csv", normalizenames=true))
 data[!, :LABEL] = repeat(["No Label"], nrow(data))
 
-# Model config
+# Config
 codes = [
     :WWW,
     :Identity,
@@ -64,12 +64,6 @@ min_neighbors=2
 limses = [0.025, 0.05, 0.1]
 colorMap = Dict("No Label" => colorant"black")
 
-# Descriptive Statistics
-println("Descripive Statistics:")
-for code in sort(codes)
-    println("  $(code): $(sum(data[!, code]))")
-end
-
 # ENA
 enaSVD = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize)
 p = plot(enaSVD, weakLinks=false)
@@ -82,128 +76,60 @@ p = plot(ena, weakLinks=false)
 savefig(p, "images/F1.png")
 display(p)
 
-# No weight1
-epsval = 0.6
+agg_data = combine(groupby(ena.metadata, :LABEL), sort(codes) .=> sum .=> sort(codes))
+CSV.write("data/agg_data.csv", agg_data)
+display(agg_data)
 
-## UMAP
-model = embedUnits!(ena, :Day, knn, 0.0, seed)
-embedNetwork!(ena, model, seed)
+# The Gamut
+function gamut(epsval, w)
 
-## DBSCAN
-autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
+    ## UMAP
+    model = embedUnits!(ena, :Day, knn, w, seed)
+    embedNetwork!(ena, model, seed)
 
-## Plotting
-p = plot(ena, weakLinks=false, groupBy=:LABEL)
-savefig(p, "images/LabelF1_0.0.png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day)
-savefig(p, "images/SpectralUMAP_0.0.png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day, colormode=:label)
-savefig(p, "images/LabelUMAP_0.0.png")
-display(p)
-for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
-    if group != "No Label"
-        p = plotUMAP(ena, colorMap, :Day, colormode=:label, group=group)
-        savefig(p, "images/GroupedUMAP_0.0_group_$(i).png")
-        display(p)
+    ## DBSCAN
+    autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
+
+    ## Plotting
+    p = plot(ena, weakLinks=false, groupBy=:LABEL)
+    savefig(p, "images/LabelF1_$(w).png")
+    display(p)
+
+    p = plotUMAP(ena, colorMap, :Day)
+    savefig(p, "images/SpectralUMAP_$(w).png")
+    display(p)
+
+    p = plotUMAP(ena, colorMap, :Day, colormode=:label)
+    savefig(p, "images/LabelUMAP_$(w).png")
+    display(p)
+
+    for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
+        if group != "No Label"
+            p = plotUMAP(ena, colorMap, :Day, colormode=:label, group=group)
+            savefig(p, "images/GroupedUMAP_$(w)_group_$(i).png")
+            display(p)
+        end
     end
+
+    ## Descriptive Statistics
+    bounds = findLabelBounds(ena, :Date)
+    CSV.write("data/bounds_$(w).csv", bounds)
+    display(bounds)
+
+    agg_data = combine(groupby(ena.metadata, :LABEL), sort(codes) .=> sum .=> sort(codes))
+    CSV.write("data/agg_data_$(w).csv", agg_data)
+    display(agg_data)
+
+    p = plotCDFs(ena, :Day, colorMap)
+    savefig(p, "images/CDFs_$(w).png")
+    display(p)
 end
 
-# Low weight1
-epsval = 0.48
-w = 1 / (nrow(ena.networkModel) + 1)
-
-## UMAP
-model = embedUnits!(ena, :Day, knn, w, seed)
-embedNetwork!(ena, model, seed)
-
-## DBSCAN
-autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
-
-## Plotting
-p = plot(ena, weakLinks=false, groupBy=:LABEL)
-savefig(p, "images/LabelF1_$(w).png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day)
-savefig(p, "images/SpectralUMAP_$(w).png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day, colormode=:label)
-savefig(p, "images/LabelUMAP_$(w).png")
-display(p)
-for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
-    if group != "No Label"
-        p = plotUMAP(ena, colorMap, :Day, colormode=:label, group=group)
-        savefig(p, "images/GroupedUMAP_$(w)_group_$(i).png")
-        display(p)
-    end
-end
-
-# High weight1
-epsval = 0.5
-w = 0.999999999999
-
-## UMAP
-model = embedUnits!(ena, :Day, knn, w, seed)
-embedNetwork!(ena, model, seed)
-
-## DBSCAN
-autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
-
-## Plotting
-p = plot(ena, weakLinks=false, groupBy=:LABEL)
-savefig(p, "images/LabelF1_$(w).png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day)
-savefig(p, "images/SpectralUMAP_$(w).png")
-display(p)
-p = plotUMAP(ena, colorMap, :Day, colormode=:label)
-savefig(p, "images/LabelUMAP_$(w).png")
-display(p)
-for (i, group) in enumerate(sort(unique(ena.metadata[!, :LABEL])))
-    if group != "No Label"
-        p = plotUMAP(ena, colorMap, :Day, colormode=:label, group=group)
-        savefig(p, "images/GroupedUMAP_$(w)_group_$(i).png")
-        display(p)
-    end
-end
+gamut(0.6, 0.0)
+gamut(0.48, 1 / (nrow(ena.networkModel) + 1))
+gamut(0.5, 0.999999999999)
 
 
-
-# ## Displaying time windows (text)
-# for label in sort(unique(data[!, :LABEL]))
-#     if label != "No Label"
-#         labelRows = data[!, :LABEL] .== label
-#         println("$(label): $(first(data[labelRows, :Date])) -- $(last(data[labelRows, :Date]))")
-#     end
-# end
-
-# ## Displaying time windows (cdf's)
-# dayLabelMap = Dict(row[:Day] => row[:LABEL] for row in eachrow(data))
-# labelCounts = Dict(label => 0 for label in unique(data[!, :LABEL]))
-# labelPrevX = Dict(label => 0 for label in unique(data[!, :LABEL]))
-# p = plot(; size=(800,800))
-# for (x, day) in enumerate(data[!, :Day])
-#     label = dayLabelMap[day]
-#     if label != "No Label"
-#         plot!(p,
-#             [labelPrevX[label], x],
-#             [labelCounts[label], labelCounts[label] + 1],
-#             label=nothing,
-#             seriestype=:line,
-#             linecolor=colorMap[label])
-
-#         labelCounts[label] += 1
-#         labelPrevX[label] = x
-#     end
-# end
-
-# savefig(p, "images/CDFs.png")
-
-# # Code and Count
-# agg_data = combine(groupby(data, :LABEL), sort(codes) .=> sum .=> sort(codes))
-# display(agg_data)
-# CSV.write("data/agg_data.csv", agg_data)
 
 # # LDA
 # groups = sort(unique(data[!, :LABEL]))

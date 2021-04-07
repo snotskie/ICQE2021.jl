@@ -277,3 +277,51 @@ function autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbo
         data[dataRows, :LABEL] = row[:LABEL]
     end
 end
+
+
+
+# Descriptive Statistics
+## Helper 5 - create df containing upper and lower bound for each labeled group
+function findLabelBounds(ena, col)
+    labels = String[]
+    starts = Any[]
+    ends = Any[]
+    for label in sort(unique(ena.metadata[!, :LABEL]))
+        if label != "No Label"
+            labelRows = ena.metadata[!, :LABEL] .== label
+            push!(labels, label)
+            push!(starts, first(ena.metadata[labelRows, col]))
+            push!(ends, last(ena.metadata[labelRows, col]))
+        end
+    end
+
+    return DataFrame(
+        :LABEL => labels,
+        :LowerBound => starts,
+        :UpperBound => ends
+    )
+end
+
+## Helper 6 - plot cdfs so we can see how the groups overlap
+function plotCDFs(ena, col, colorMap)
+    dayLabelMap = Dict(row[col] => row[:LABEL] for row in eachrow(ena.metadata))
+    labelCounts = Dict(label => 0 for label in unique(ena.metadata[!, :LABEL]))
+    labelPrevX = Dict(label => 0 for label in unique(ena.metadata[!, :LABEL]))
+    p = plot(; size=(800,800))
+    for (x, day) in enumerate(sort(ena.metadata[!, col]))
+        label = dayLabelMap[day]
+        if label != "No Label"
+            plot!(p,
+                [labelPrevX[label], x],
+                [labelCounts[label], labelCounts[label] + 1],
+                label=nothing,
+                seriestype=:line,
+                linecolor=colorMap[label])
+
+            labelCounts[label] += 1
+            labelPrevX[label] = x
+        end
+    end
+
+    return p
+end
