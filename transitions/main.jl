@@ -134,8 +134,27 @@ function gamut(epsval, w)
 end
 
 gamut(0.6, 0.0)
-gamut(0.375, 1 / (nrow(ena.networkModel) + 1))
 gamut(0.5, 0.999999999999)
+gamut(0.375, 1 / (nrow(ena.networkModel) + 1))
+
+# A specific subsetted F1 rotation building off that last gamut
+ena = ENAModel(
+    data, codes, conversations, units,
+    rotateBy=rotation,
+    dropEmpty=dropEmpty,
+    sphereNormalize=sphereNormalize,
+    dimensionNormalize=dimensionNormalize,
+    subsetFilter=(row->row[:LABEL] in [
+        "Auto Cluster #1",
+        "Auto Cluster #2",
+        "Auto Cluster #5",
+        "Auto Cluster #6"
+    ])
+)
+
+p = plot(ena, weakLinks=false, groupBy=:LABEL, extraColors=EpistemicNetworkAnalysis.DEFAULT_EXTRA_COLORS[[1, 2, 5, 6]])
+savefig(p, "images/SubsetF1.png")
+display(p)
 
 
 

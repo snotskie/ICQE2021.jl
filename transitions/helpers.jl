@@ -272,8 +272,9 @@ function autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbo
     end
 
     ### Saving labels back into original dataframe
+    data[!, :LABEL] .= "No Label"
     for row in eachrow(ena.metadata)
-        dataRows = [join(dataRow[ena.codes], ".") == row[:ENA_UNIT] for dataRow in eachrow(data)]
+        dataRows = [join(dataRow[ena.units], ".") == row[:ENA_UNIT] for dataRow in eachrow(data)]
         data[dataRows, :LABEL] = row[:LABEL]
     end
 end
