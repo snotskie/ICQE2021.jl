@@ -76,12 +76,13 @@ colorMap = Dict("No Label" => colorant"black")
 enaSVD = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize)
 p = plot(enaSVD, weakLinks=false)
 savefig(p, "images/SVD.png")
+display(enaSVD)
 display(p)
 
 rotation = FormulaRotation(LinearModel, 2, @formula(col ~ 1 + Day), nothing)
 ena = ENAModel(data, codes, conversations, units, rotateBy=rotation, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, dimensionNormalize=dimensionNormalize)
 p = plot(ena, weakLinks=false)
-savefig(p, "images/F1.png")
+savefig(p, "images/F1.png")             
 display(p)
 
 agg_data = combine(groupby(ena.metadata, :LABEL), sort(codes) .=> sum .=> sort(codes))
@@ -155,6 +156,23 @@ ena = ENAModel(
 p = plot(ena, weakLinks=false, groupBy=:LABEL, extraColors=EpistemicNetworkAnalysis.DEFAULT_EXTRA_COLORS[[1, 2, 5, 6]])
 savefig(p, "images/SubsetF1.png")
 display(p)
+
+cluster1rows = [row[:LABEL] == "Auto Cluster #1" for row in eachrow(ena.metadata)]
+cluster2rows = [row[:LABEL] == "Auto Cluster #2" for row in eachrow(ena.metadata)]
+cluster5rows = [row[:LABEL] == "Auto Cluster #5" for row in eachrow(ena.metadata)]
+cluster6rows = [row[:LABEL] == "Auto Cluster #6" for row in eachrow(ena.metadata)]
+result12 = MannWhitneyUTest(ena.accumModel[cluster1rows, :pos_y], ena.accumModel[cluster2rows, :pos_y])
+result15 = MannWhitneyUTest(ena.accumModel[cluster5rows, :pos_x], ena.accumModel[cluster1rows, :pos_x])
+result56 = MannWhitneyUTest(ena.accumModel[cluster5rows, :pos_x], ena.accumModel[cluster6rows, :pos_x])
+display(result12)
+display(result15)
+display(result56)
+display(median(ena.accumModel[cluster1rows, :pos_y]))
+display(median(ena.accumModel[cluster2rows, :pos_y]))
+display(median(ena.accumModel[cluster1rows, :pos_x]))
+display(median(ena.accumModel[cluster5rows, :pos_x]))
+display(median(ena.accumModel[cluster6rows, :pos_x]))
+display(ena)
 
 
 

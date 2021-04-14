@@ -285,12 +285,14 @@ end
 ## Helper 5 - create df containing upper and lower bound for each labeled group
 function findLabelBounds(ena, col)
     labels = String[]
+    sizes = Any[]
     starts = Any[]
     ends = Any[]
     for label in sort(unique(ena.metadata[!, :LABEL]))
         if label != "No Label"
             labelRows = ena.metadata[!, :LABEL] .== label
             push!(labels, label)
+            push!(sizes, length(ena.metadata[labelRows, col]))
             push!(starts, first(ena.metadata[labelRows, col]))
             push!(ends, last(ena.metadata[labelRows, col]))
         end
@@ -298,6 +300,7 @@ function findLabelBounds(ena, col)
 
     return DataFrame(
         :LABEL => labels,
+        :N => sizes,
         :LowerBound => starts,
         :UpperBound => ends
     )
