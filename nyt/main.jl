@@ -1,16 +1,10 @@
 using EpistemicNetworkAnalysis
-using UMAP
 using Plots
 using LinearAlgebra
 using DataFrames
-using Random
 using Statistics
 using CSV
-using Distances
-using Dates
-using Colors
 using GLM
-using Clustering
 using HypothesisTests
 
 cd(Base.source_dir())
@@ -51,44 +45,65 @@ conversations = [:ThreadNumber]
 units = [:ThreadNumber, :CommentPosition]
 dropEmpty=true
 sphereNormalize=true
-weakLinks=true
-groupBy=:WCGroup
 
 # Biplot
+## Run model
 ena = BiplotModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize)
+display(ena)
+
+## Plot
 p = plot(ena)
 savefig(p, "images/Biplot.png")
-display(ena)
-display(p)
 
 # SVD
+## Run model
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize)
-p = plot(ena, weakLinks=weakLinks)
-savefig(p, "images/SVD.png")
 display(ena)
-display(p)
+
+## Plot normally
+p = plot(ena)
+savefig(p, "images/SVD.png")
+
+## Plot with warps shown
+p = plot(ena, showWarps=true)
+savefig(p, "images/SVD_Warped.png")
+
+## Plot hiding weak links
+p = plot(ena, weakLinks=false)
+savefig(p, "images/SVD_NoWeakLinks.png")
 
 # Means Rotation, comparing lower word counts to higher word counts
 rotation = MeansRotation(:WCGroup, "Lower Half", "Upper Half")
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, weakLinks=weakLinks)
-savefig(p, "images/MR1a.png")
 display(ena)
-display(p)
+p = plot(ena)
+savefig(p, "images/MR1a.png")
+p = plot(ena, showWarps=true)
+savefig(p, "images/MR1a_Warped.png")
+p = plot(ena, weakLinks=false)
+savefig(p, "images/MR1a_NoWeakLinks.png")
 
+# Means Rotation, those that showed negative emotions vs. those that didn't
 rotation = MeansRotation(:NegString, "0", "1")
 ena = ENAModel(data, codes[3:end], conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, weakLinks=weakLinks)
-savefig(p, "images/MR1b.png")
 display(ena)
-display(p)
+p = plot(ena)
+savefig(p, "images/MR1b.png")
+p = plot(ena, showWarps=true)
+savefig(p, "images/MR1b_Warped.png")
+p = plot(ena, weakLinks=false)
+savefig(p, "images/MR1b_NoWeakLinks.png")
 
+# Means Rotation, those that showed positive emotions vs. those that didn't
 rotation = MeansRotation(:PosString, "0", "1")
 ena = ENAModel(data, codes[3:end], conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, weakLinks=weakLinks)
-savefig(p, "images/MR1c.png")
 display(ena)
-display(p)
+p = plot(ena)
+savefig(p, "images/MR1c.png")
+p = plot(ena, showWarps=true)
+savefig(p, "images/MR1c_Warped.png")
+p = plot(ena, weakLinks=false)
+savefig(p, "images/MR1c_NoWeakLinks.png")
 
 # cluster1rows = [row[:LABEL] == "Auto Cluster #1" for row in eachrow(ena.metadata)]
 # cluster2rows = [row[:LABEL] == "Auto Cluster #2" for row in eachrow(ena.metadata)]
