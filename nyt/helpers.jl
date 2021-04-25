@@ -341,11 +341,26 @@ end
 
 # Preprocessing
 ## Helper 7 - 
-function derivedCode!(data, newCol, oldCols...)
+function derivedCode!(data::DataFrame, newCol::Symbol, oldCols...)
     data[!, newCol] = ones(nrow(data))
     for col in oldCols
         data[!, newCol] = data[!, newCol] .* (1 .- data[!, col])
     end
 
     data[!, newCol] = 1 .- data[!, newCol]
+end
+
+function derivedCode!(data::DataFrame, cutoff::Number, newCol::Symbol, oldCols...)
+    data[!, newCol] = zeros(nrow(data))
+    for col in oldCols
+        data[!, newCol] += data[!, col]
+    end
+
+    data[!, newCol] = map(data[!, newCol]) do val
+        if val < cutoff
+            return 0
+        else
+            return 1
+        end
+    end
 end
