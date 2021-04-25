@@ -247,10 +247,10 @@ end
 
 # Clustering
 ## Helper 4 - detect clusters from umap_x and umap_y positions
-function autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors)
+function autocluster2!(ena, data, colorMap, epsval, min_cluster_size, min_neighbors, dims)
 
     ### Prepare data
-    X = Matrix{Float64}(ena.accumModel[!, [:umap_x, :umap_y]])
+    X = Matrix{Float64}(ena.accumModel[!, dims])
     X = Matrix{Float64}(transpose(X))
     
     ### Using DBSCAN to detect labels
