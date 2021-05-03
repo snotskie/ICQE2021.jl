@@ -1,0 +1,222 @@
+---
+title: Images for Carl
+author: Mariah A. Knowles
+date: May, 3rd 2021
+---
+
+# Setup
+
+## Imports
+
+```julia
+using EpistemicNetworkAnalysis
+using GLM
+```
+
+## Global Config
+
+```julia
+# Data
+data = ena_dataset("shakespeare.data")
+
+# Config
+codes = [
+    :Love,
+    :Beauty,
+    :Death,
+    :Fear,
+    :Friendship,
+    :Hate,
+    :Honor,
+    :Men,
+    :Women,
+    :Pride
+]
+
+conversations = [:Play, :Act, :Scene]
+units = [:Play, :Act, :Speaker]
+dropEmpty=true
+sphereNormalize=true
+extraColors = [
+        EpistemicNetworkAnalysis.DEFAULT_NEG_COLOR,
+        EpistemicNetworkAnalysis.DEFAULT_POS_COLOR,
+        EpistemicNetworkAnalysis.DEFAULT_EXTRA_COLORS...
+]
+```
+
+# Analysis (Hamlet vs. RJ)
+
+## SVD
+
+Note that (a,f) the groups overlap, but (f) there are some differences.
+
+```julia
+let # create a non-global scope
+
+rotation = SVDRotation()
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena, groupBy=:Play, extraColors=extraColors)
+display(p)
+display(ena)
+
+end # let
+```
+
+### MR1
+
+Note that (a,f) that the groups don't overlap now. Men goes towards Hamlet, Women goes towards RJ.
+
+```julia
+let # create a non-global scope
+
+rotation = MeansRotation(:Play, "Hamlet", "Romeo and Juliet")
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena)
+display(p)
+display(ena)
+
+end # let
+```
+
+## LDA (no subspace adjustment)
+
+Y-axis is MR of remaining variance.
+
+Note (a,f) that groups are pulled apart on both X and Y axes, but (a) the variance explained on X is nearly none. Also, the coregistration along X is about 60%.
+
+```julia
+let # create a non-global scope
+
+rotation = LDARotation(:Play)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena, extraColors=extraColors)
+display(p)
+display(ena)
+
+end # let
+```
+
+## LDA (with subspace adjustment)
+
+X-axis is LDA within subspace of first 4 SVD dimensions. Y-axis is MR of remaining variance within that subspace.
+
+Note (a) the variance explained is now 9%, the coregistration is now 93%, and (a,f) the difference still seems to be Men vs. Women.
+
+```julia
+let # create a non-global scope
+
+rotation = LDARotation(:Play)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=4)
+p = plot(ena, extraColors=extraColors)
+display(p)
+display(ena)
+
+end # let
+```
+
+## Code Difference Rotation (Men vs Women)
+
+Note (a,f) the groups are pulled apart when we look at the account of the networks given by Men vs. Women.
+
+```julia
+let # create a non-global scope
+
+rotation = EpistemicNetworkAnalysis.DifferenceRotation(8, 9)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
+p = plot(ena, groupBy=:Play, extraColors=extraColors)
+display(p)
+display(ena)
+
+end # let
+```
+
+# Analysis (Acts over Time)
+
+## SVD
+
+Note that (a) the groups have a lot of overlap, though (i-r) we see some differences.
+
+```julia
+let # create a non-global scope
+
+rotation = SVDRotation()
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena, groupBy=:Act)
+display(p)
+display(ena)
+
+end # let
+```
+
+## F1
+
+Note that time appears to move from Beauty to Death, and 1/2/3 overlap and 4/5 overlap, but there is a big jump between those.
+
+```julia
+let # create a non-global scope
+
+rotation = FormulaRotation(
+    LinearModel, 2, @formula(col ~ 1 + Act), nothing
+)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena, groupBy=:Act)
+display(p)
+display(ena)
+
+end # let
+```
+
+## LDA (no subspace adjustment)
+
+These axes are non-orthogonal.
+
+Note that the coregistration and variances explained are very low, and note that I had to zoom in a LOT. Acts 1+2 overlap, but the rest stand apart.
+
+```julia
+let # create a non-global scope
+
+rotation = LDARotation(:Act)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
+p = plot(ena, lims=0.10)
+display(p)
+display(ena)
+
+end # let
+```
+
+## LDA (with subspace adjustment)
+
+These axes are orthogonal.
+
+LDA restricted to subspace of first 7 SVD dimensions.
+
+Note that the coregistrations are higher, (a) variances explained are higher, and (a) Acts 4 and 5 stand apart, and the rest overlap.
+
+
+```julia
+let # create a non-global scope
+
+rotation = LDARotation(:Act)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=7)
+p = plot(ena)
+display(p)
+display(ena)
+
+end # let
+```
+
+## Code Difference Rotation (Beauty vs. Death)
+
+Note that this pulls 4+5 apart from 1+2+3.
+
+```julia
+let # create a non-global scope
+
+rotation = EpistemicNetworkAnalysis.DifferenceRotation(2, 3)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
+p = plot(ena, groupBy=:Act)
+display(p)
+display(ena)
+
+end # let
+```
