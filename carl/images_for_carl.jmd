@@ -58,7 +58,7 @@ end # let
 
 ### MR1
 
-Note that (a,f) that the groups don't overlap now. Men+Death goes towards Hamlet and Women+Love+Death goes towards RJ.
+Note that (a,f) that the groups don't overlap now. Men+Honor+Death goes towards Hamlet and Women+Love+Death goes towards RJ.
 
 ```julia
 let # create a non-global scope
@@ -74,9 +74,7 @@ end # let
 
 ## LDA (no subspace adjustment)
 
-Y-axis is MR of remaining variance.
-
-Note (a,f) that groups are pulled apart on both X and Y axes, but (a) the variance explained on X is 3% and the coregistration along X is about 87%. The difference seems to be Men vs. Women.
+Note (a,f) that groups are pulled apart on both X and Y axes, but (a) the variance explained on X is 2% and the coregistration along X is about 82%. The difference seems to be Honor vs. Women.
 
 ```julia
 let # create a non-global scope
@@ -92,15 +90,15 @@ end # let
 
 ## LDA (with subspace adjustment)
 
-X-axis is LDA within subspace of first 4 SVD dimensions. Y-axis is MR of remaining variance within that subspace.
+X-axis is LDA within subspace of first 3 SVD dimensions.
 
-Note (a) the variance explained is now 16%, the coregistration is now 95%, and (a,f) the difference is now no longer just Men vs. Women, but love+death+women vs men+honor.
+Note (a) the variance explained is now 19%, the coregistration is now 95%, (a,f) the difference is now Men vs. Women, and the groups overlap a little.
 
 ```julia
 let # create a non-global scope
 
 rotation = LDARotation(:Play)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=4)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=3)
 p = plot(ena, extraColors=extraColors, lims=1.2)
 display(p)
 display(ena)
@@ -110,12 +108,28 @@ end # let
 
 ## Code Difference Rotation (Men vs Women)
 
-Note (a,f) the groups are pulled apart when we look at the account of the networks given by Men vs. Women.
+Note (a,f) the groups overlap a little when we look at the account of the networks given by Men vs. Women.
 
 ```julia
 let # create a non-global scope
 
 rotation = EpistemicNetworkAnalysis.DifferenceRotation(4, 5)
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
+display(p)
+display(ena)
+
+end # let
+```
+
+## Code Difference Rotation (Honor vs Women)
+
+Note (a,f) the groups overlap when we look at the account of the networks given by Honor vs. Women.
+
+```julia
+let # create a non-global scope
+
+rotation = EpistemicNetworkAnalysis.DifferenceRotation(3, 5)
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
 p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
