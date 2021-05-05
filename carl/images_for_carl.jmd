@@ -1,7 +1,7 @@
 ---
 title: Images for Carl
 author: Mariah A. Knowles
-date: May, 3rd 2021
+date: May 5th, 2021
 ---
 
 # Setup
@@ -10,7 +10,6 @@ date: May, 3rd 2021
 
 ```julia
 using EpistemicNetworkAnalysis
-using GLM
 ```
 
 ## Global Config
@@ -22,19 +21,14 @@ data = ena_dataset("shakespeare.data")
 # Config
 codes = [
     :Love,
-    #:Beauty,
     :Death,
-    #:Fear,
-    #:Friendship,
-    #:Hate,
     :Honor,
     :Men,
     :Women,
-    #:Pride
 ]
 
 conversations = [:Play, :Act]
-units = [:Play, :Act, :Speaker]
+units = [:Play, :Speaker]
 dropEmpty=true
 sphereNormalize=true
 extraColors = [
@@ -55,7 +49,7 @@ let # create a non-global scope
 
 rotation = SVDRotation()
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, groupBy=:Play, extraColors=extraColors)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
 display(ena)
 
@@ -71,7 +65,7 @@ let # create a non-global scope
 
 rotation = MeansRotation(:Play, "Hamlet", "Romeo and Juliet")
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena)
+p = plot(ena, lims=1.2)
 display(p)
 display(ena)
 
@@ -89,7 +83,7 @@ let # create a non-global scope
 
 rotation = LDARotation(:Play)
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, extraColors=extraColors)
+p = plot(ena, extraColors=extraColors, lims=1.2)
 display(p)
 display(ena)
 
@@ -107,7 +101,7 @@ let # create a non-global scope
 
 rotation = LDARotation(:Play)
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=4)
-p = plot(ena, extraColors=extraColors)
+p = plot(ena, extraColors=extraColors, lims=1.2)
 display(p)
 display(ena)
 
@@ -123,100 +117,7 @@ let # create a non-global scope
 
 rotation = EpistemicNetworkAnalysis.DifferenceRotation(4, 5)
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
-p = plot(ena, groupBy=:Play, extraColors=extraColors)
-display(p)
-display(ena)
-
-end # let
-```
-
-# Analysis (Acts over Time)
-
-## SVD
-
-Note that (a) the groups have a lot of overlap, though (i-r) we see some differences.
-
-```julia
-let # create a non-global scope
-
-rotation = SVDRotation()
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, groupBy=:Act)
-display(p)
-display(ena)
-
-end # let
-```
-
-## F1
-
-Note that (a) time appears to move from Love to Honor to Death, Men and Women are both around the origin along X, and 1/2/3/4/5 all overlap, but line up in Act number order.
-
-```julia
-let # create a non-global scope
-
-rotation = FormulaRotation(
-    LinearModel, 2, @formula(col ~ 1 + Act), nothing
-)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, groupBy=:Act)
-display(p)
-display(ena)
-
-end # let
-```
-
-## LDA (no subspace adjustment)
-
-These axes are non-orthogonal.
-
-Note that variance explained along Y is low and the coregistrations could be better.
-
-Note that (a) the X axis seems similar to the F1 plot in that it moves from love, to honor, to death, but here (i-r) all pairs are pulled apart except for 2/3, 3/4, and 4/5. That's good for just two LDA axes.
-
-```julia
-let # create a non-global scope
-
-rotation = LDARotation(:Act)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, lims=1)
-display(p)
-display(ena)
-
-end # let
-```
-
-## LDA (with subspace adjustment)
-
-These axes are orthogonal.
-
-LDA restricted to subspace of first 4 SVD dimensions.
-
-Note that the coregistrations are higher, (a) variances explained are higher, the X axis still is similar to the X axis from the F1 rotation, and (i-r) all pairs are pulled apart except for 1/2, 1/3, 2/3, and 5/4.
-
-
-```julia
-let # create a non-global scope
-
-rotation = LDARotation(:Act)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, subspace=4)
-p = plot(ena)
-display(p)
-display(ena)
-
-end # let
-```
-
-## Code Difference Rotation (Honor vs. Death)
-
-Note that this is very similar to the F1 rotation.
-
-```julia
-let # create a non-global scope
-
-rotation = EpistemicNetworkAnalysis.DifferenceRotation(2, 1)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
-p = plot(ena, groupBy=:Act)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
 display(ena)
 
