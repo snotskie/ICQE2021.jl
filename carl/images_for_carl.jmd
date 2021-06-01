@@ -94,7 +94,7 @@ X-axis is LDA within subspace of first 3 SVD dimensions.
 
 Note (a) the variance explained is now 19%, the coregistration is now 95%, (a,f) the difference is now Men vs. Women, and the groups overlap a little.
 
-```julia
+```{julia; eval=false}
 let # create a non-global scope
 
 rotation = LDARotation(:Play)
@@ -115,7 +115,7 @@ let # create a non-global scope
 
 rotation = EpistemicNetworkAnalysis.DifferenceRotation(4, 5)
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
-p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1, flipY=true)
 display(p)
 display(ena)
 
@@ -126,7 +126,7 @@ end # let
 
 Note (a,f) the groups overlap when we look at the account of the networks given by Honor vs. Women.
 
-```julia
+```{julia; eval=false}
 let # create a non-global scope
 
 rotation = EpistemicNetworkAnalysis.DifferenceRotation(3, 5)
