@@ -1,7 +1,7 @@
 ---
 title: Images for Carl
 author: Mariah A. Knowles
-date: May 5th, 2021
+date: June 1st, 2021
 ---
 
 # Setup
@@ -113,25 +113,9 @@ Note (a,f) the groups overlap a little when we look at the account of the networ
 ```julia
 let # create a non-global scope
 
-rotation = EpistemicNetworkAnalysis.DifferenceRotation(4, 5)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
+rotation = ThematicRotation([:Men], [:Women])
+ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
 p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1, flipY=true)
-display(p)
-display(ena)
-
-end # let
-```
-
-## Code Difference Rotation (Honor vs Women)
-
-Note (a,f) the groups overlap when we look at the account of the networks given by Honor vs. Women.
-
-```{julia; eval=false}
-let # create a non-global scope
-
-rotation = EpistemicNetworkAnalysis.DifferenceRotation(3, 5)
-ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation, rotateOn=:codeModel)
-p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
 display(ena)
 
