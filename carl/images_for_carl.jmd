@@ -10,6 +10,7 @@ date: June 1st, 2021
 
 ```julia
 using EpistemicNetworkAnalysis
+using Plots
 ```
 
 ## Global Config
@@ -52,6 +53,7 @@ ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNor
 p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
 display(ena)
+savefig(p, "SVD.png")
 
 end # let
 ```
@@ -68,6 +70,7 @@ ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNor
 p = plot(ena, lims=1.2)
 display(p)
 display(ena)
+savefig(p, "MR.png")
 
 end # let
 ```
@@ -84,6 +87,7 @@ ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNor
 p = plot(ena, extraColors=extraColors, lims=1.2)
 display(p)
 display(ena)
+savefig(p, "LDA.png")
 
 end # let
 ```
@@ -115,9 +119,10 @@ let # create a non-global scope
 
 rotation = ThematicRotation([:Men], [:Women])
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1, flipY=false)
 display(p)
 display(ena)
+savefig(p, "Edge.png")
 
 end # let
 ```
