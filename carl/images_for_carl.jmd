@@ -37,6 +37,10 @@ extraColors = [
         EpistemicNetworkAnalysis.DEFAULT_POS_COLOR,
         EpistemicNetworkAnalysis.DEFAULT_EXTRA_COLORS...
 ]
+
+# Plotting
+Plots.scalefontsizes()
+Plots.scalefontsizes(2)
 ```
 
 # Analysis (Hamlet vs. RJ)
