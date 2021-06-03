@@ -11,6 +11,7 @@ date: June 1st, 2021
 ```julia
 using EpistemicNetworkAnalysis
 using Plots
+using Random
 ```
 
 ## Global Config
@@ -41,6 +42,9 @@ extraColors = [
 # Plotting
 Plots.scalefontsizes()
 Plots.scalefontsizes(2)
+
+# Noise
+Random.seed!(1234)
 ```
 
 # Analysis (Hamlet vs. RJ)
@@ -123,7 +127,7 @@ let # create a non-global scope
 
 rotation = ThematicRotation([:Men], [:Women])
 ena = ENAModel(data, codes, conversations, units, dropEmpty=dropEmpty, sphereNormalize=sphereNormalize, rotateBy=rotation)
-p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1, flipY=false)
+p = plot(ena, groupBy=:Play, extraColors=extraColors, lims=1.1)
 display(p)
 display(ena)
 savefig(p, "Edge.png")
