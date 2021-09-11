@@ -1,7 +1,7 @@
 LABEL,N,LowerBound,UpperBound
-Auto Cluster #1,53,"February 14, 2020","November 14, 2020"
-Auto Cluster #2,36,"February 21, 2020","August 23, 2020"
-Auto Cluster #3,10,"April 2, 2020","August 1, 2020"
-Auto Cluster #4,13,"July 16, 2020","February 11, 2021"
-Auto Cluster #5,69,"August 24, 2020","February 12, 2021"
-Auto Cluster #6,12,"September 19, 2020","February 13, 2021"
+#1,53,"February 14, 2020","November 14, 2020"
+#2,36,"February 21, 2020","August 23, 2020"
+#3,10,"April 2, 2020","August 1, 2020"
+#4,13,"July 16, 2020","February 11, 2021"
+#5,69,"August 24, 2020","February 12, 2021"
+#6,12,"September 19, 2020","February 13, 2021"

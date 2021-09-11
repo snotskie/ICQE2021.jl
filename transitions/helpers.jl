@@ -89,14 +89,14 @@ function embedNetwork!(ena, model, seed)
 end
 
 ## Helper 3 - plot UMAP+ENA projections
-function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSize=8, codeSize=8, unitSize=4)
+function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSize=8, codeSize=8, unitSize=4, xlims=(-1.5, 1.5), ylims=(-1.5, 1.5))
 
     ### Empty plot
     p = plot(; size=(800,800))
     xticks!(p, [-1, 1])
     yticks!(p, [-1, 1])
-    xlims!(p, (-1.5, 1.5))
-    ylims!(p, (-1.5, 1.5))
+    xlims!(p, xlims)
+    ylims!(p, ylims)
 
     ### Hide empty networks, and optionally focus on just one group
     nonZeroRows = map(eachrow(ena.accumModel)) do row
@@ -177,7 +177,7 @@ function plotUMAP(ena, colorMap, col; group=nothing, colormode=:spectral, lineSi
             linecolor=:grey)
     end
     
-    labels = map(label->text(label, :top, 8), ena.codeModel[!, :code])
+    labels = map(label->text(label, :top, default(:xtickfontsize)), ena.codeModel[!, :code])
     plot!(p,
         codeXs,
         codeYs,
@@ -259,7 +259,8 @@ function autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbo
     ### Applying the labels
     ena.metadata[!, :LABEL] .= "No Label"
     for (i, cluster) in enumerate(results)
-        mylabel = "Auto Cluster #$(i)"
+        mylabel = "#$(i)"
+        # mylabel = "Auto Cluster #$(i)"
         ena.metadata[cluster.core_indices, :LABEL] .= mylabel
         ena.metadata[cluster.boundary_indices, :LABEL] .= mylabel
         if !haskey(colorMap, mylabel)
@@ -275,7 +276,7 @@ function autocluster!(ena, data, colorMap, epsval, min_cluster_size, min_neighbo
     data[!, :LABEL] .= "No Label"
     for row in eachrow(ena.metadata)
         dataRows = [join(dataRow[ena.units], ".") == row[:ENA_UNIT] for dataRow in eachrow(data)]
-        data[dataRows, :LABEL] = row[:LABEL]
+        data[dataRows, :LABEL] .= row[:LABEL]
     end
 end
 
